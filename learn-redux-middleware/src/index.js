@@ -8,6 +8,9 @@ import * as serviceWorker from './serviceWorker';
 import rootReducer from './modules';
 // import loggerMidleware from './lib/loggerMiddleware';
 import { createLogger } from 'redux-logger';
+
+// Thunk란?
+// 특정 작업을 나중에 할 수 있도록 미루기 위해 함수형태로 감싼 것을 의미.
 import ReduxThunk from 'redux-thunk';
 
 const logger = createLogger();
