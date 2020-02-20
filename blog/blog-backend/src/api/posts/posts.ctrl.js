@@ -4,14 +4,39 @@ import Joi from 'joi';
 
 const { ObjectId } = mongoose.Types;
 
-export const checkObjectId = (ctx, next) => {
+export const getPostById = async (ctx, next) => {
   const { id } = ctx.params;
   if (!ObjectId.isValid(id)) {
     ctx.status = 400; // Bad Request
     return;
   }
-  return next();
+  try {
+    const post = await Post.findById(id);
+    // 포스트가 존재하지 않을 때
+    if (!post) {
+      ctx.status = 404; // Not Found
+      return;
+    }
+    ctx.state.post = post;
+    return next();
+  } catch (e) {
+    ctx.throw(500, e);
+  }
 };
+
+/**
+ * id로 찾은 포스트가 로그인 중인 사용자가 작성한 포스트인지 확인
+ * @param {*} ctx 
+ * @param {*} next 
+ */
+export const checkOwnPost = (ctx, next) => {
+  const { user, post } = ctx.state;
+  if (post.user._id.toString() !== user._id) {
+    ctx.status = 403;
+    return;
+  }
+  return next();
+}
 
 /**
  * POST /api/posts
@@ -48,6 +73,7 @@ export const write = async ctx => {
     title,
     body,
     tags,
+    user: ctx.state.user
   });
 
   try {
@@ -61,7 +87,7 @@ export const write = async ctx => {
 };
 
 /**
- * GET /api/posts
+ * GET /api/posts?username=&tag=&page=
  * 데이터 조회 기능
  *
  * @param {*} ctx
@@ -75,17 +101,23 @@ export const list = async ctx => {
     ctx.status = 400;
     return;
   }
+  const { tag, username } = ctx.query;
+  // tag, username 값이 유효하면 객체 안에 넣고, 그렇지 않으면 넣지 않음
+  const query = {
+    ...(username ? { 'user.username': username } : {}),
+    ...(tag ? { tags: tag } : {}),
+  }
 
   try {
     // find() 함수를 호출한 후에는 exec()을 붙여줘야 서버에 쿼리를 요청함.
-    const posts = await Post.find()
+    const posts = await Post.find(query)
       .sort({ _id: -1 })
       .limit(10)
       .skip((page - 1) * 10)
       //.lean()
       .exec();
 
-    const postCount = await Post.countDocuments().exec();
+    const postCount = await Post.countDocuments(query).exec();
     ctx.set('Last-Page', Math.ceil(postCount / 10));
     ctx.body = posts
       // 위에서 .lean()을 사용하면 .toJSON()을 안해도 됨.
@@ -107,19 +139,7 @@ export const list = async ctx => {
  * @param {*} ctx
  */
 export const read = async ctx => {
-  const { id } = ctx.params;
-
-  try {
-    const post = await Post.findById(id).exec();
-
-    if (!post) {
-      ctx.status = 404; // Not Found
-      return;
-    }
-    ctx.body = post;
-  } catch (e) {
-    ctx.throw(500, e);
-  }
+  ctx.body = ctx.state.post;
 };
 
 /**
