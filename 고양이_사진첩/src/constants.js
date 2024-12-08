@@ -1,0 +1,5 @@
+const FILE_TYPE = 'FILE';
+const DIRECTORY_TYPE = 'DIRECTORY';
+const PREV_TYPE = 'PREV';
+
+export { FILE_TYPE, DIRECTORY_TYPE, PREV_TYPE };

@@ -1,0 +1,16 @@
+{
+  "name": "cat_photo-album",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "고양이 사진첩 과제 테스트",
+  "main": "index.js",
+  "scripts": {
+    "start": "serve -l 5000",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "taylous",
+  "license": "MIT",
+  "dependencies": {
+    "serve": "^14.2.4"
+  }
+}
